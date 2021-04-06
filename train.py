@@ -95,11 +95,11 @@ class ModelParameters:
 if __name__ == '__main__':
 
     paths = dict(
-        dv2017="/path/to/DAVIS",
+        dv2017="/content/DAVIS",
         ytvos2018="/path/to/YouTubeVOS/2018",
-        checkpoints="/path/to/workspace/checkpoints",  # Checkpoints. Session-name subdirectories will be created here.
-        tensorboard="/path/to/workspace/tensorboard",  # Tensorboard logs. Session-name subdirectories will be created here.
-        tmcache="/path/to/workspace/tmodels_cache"     # Cache of pretrained target models, requires 22 GB disk space.
+        checkpoints="/content/drive/MyDrive/checkpoints",  # Checkpoints. Session-name subdirectories will be created here.
+        tensorboard="/content/drive/MyDrive/tensorboard",  # Tensorboard logs. Session-name subdirectories will be created here.
+        tmcache="/content/drive/MyDrive/tmodels_cache"     # Cache of pretrained target models, requires 22 GB disk space.
     )
     # paths = dict(
     #     dv2017="~/data/datasets/DAVIS",
