@@ -110,10 +110,10 @@ if __name__ == '__main__':
     # Edit these paths for your local setup
 
     paths = dict(
-        models=Path(__file__).parent / "weights",  # The .pth files should be here
-        davis="/path/to/DAVIS",  # DAVIS dataset root
+        models="/content/drive/MyDrive/checkpoints/vos",  # The .pth files should be here
+        davis="/content/DAVIS",  # DAVIS dataset root
         yt2018="/path/to/ytvos2018",  # YouTubeVOS 2018 root
-        output="/path/to/results",  # Output path
+        output="/content/drive/MyDrive/results",  # Output path
     )
     # paths = dict(
     #     models=Path(__file__).parent / "weights",  # The .pth files should be here

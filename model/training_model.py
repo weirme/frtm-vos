@@ -151,15 +151,16 @@ class TrainerModel(nn.Module):
 
         batch_size = image.shape[0]
         features = self.feature_extractor(image)
-        scores = []
-        ft = features[self.tmodels[0].discriminator.layer]
+        # scores = []
+        # ft = features[self.tmodels[0].discriminator.layer]
 
-        for i, tmdl in zip(range(batch_size), self.tmodels):
-            x = ft[i, None]
-            s = tmdl.classify(x)
-            scores.append(s)
-        scores = torch.cat(scores, dim=0)
+        # for i, tmdl in zip(range(batch_size), self.tmodels):
+        #     x = ft[i, None]
+        #     s = tmdl.classify(x)
+        #     scores.append(s)
+        # scores = torch.cat(scores, dim=0)
 
+        scores = torch.zeros_like(features)
         y = self.refiner(scores, features, image.shape)
         y = interpolate(y, image.shape[-2:])
 
