@@ -122,7 +122,11 @@ class TrainerModel(nn.Module):
     def _initialize(self, first_image, first_labels, specs):
 
         cache_hits = 0
-        self.tmodels.init(first_image, first_labels)
+        first_image = first_image.to(self.device)
+        first_labels = first_labels.to(self.device)
+        with torch.no_grad():
+          first_fea = self.feature_extractor(first_image)["layer4"]
+        self.tmodels.init(first_fea, first_labels)
 
         # Augment first image and extract features
 
@@ -160,7 +164,7 @@ class TrainerModel(nn.Module):
         batch_size = image.shape[0] # 16
         features = self.feature_extractor(image)
         scores = []
-        ft = features[self.tmodels[0].discriminator.layer] # (16, 1024, 30, 54)
+        ft = features["layer4"] # (16, 1024, 30, 54)
 
         # for i, tmdl in zip(range(batch_size), self.tmodels):
         #     x = ft[i, None]
