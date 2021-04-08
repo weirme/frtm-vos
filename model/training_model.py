@@ -102,7 +102,6 @@ class TrainerModel(nn.Module):
         for i in range(1, len(images)):
 
             s = self._forward(images[i].to(self.device))
-
             y = labels[i].to(self.device).float()
             acc = self.compute_accuracy(s.detach(), y)
             loss = self.compute_loss(s, y)
@@ -124,8 +123,7 @@ class TrainerModel(nn.Module):
         cache_hits = 0
         first_image = first_image.to(self.device)
         first_labels = first_labels.to(self.device)
-        with torch.no_grad():
-          first_fea = self.feature_extractor(first_image)["layer4"]
+        first_fea = self.feature_extractor(first_image)["layer4"]
         self.tmodels.init(first_fea, first_labels)
 
         # Augment first image and extract features

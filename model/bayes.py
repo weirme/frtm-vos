@@ -77,36 +77,35 @@ class BayesModel(nn.Module):
         delta = delta.permute(0, 2, 3, 1).reshape(-1, 1, nchannels)
         mm = torch.bmm(delta, delta.transpose(1, 2))
         dist = 2 / (1 + torch.exp(mm.view(batch_size, h, w)))
-        return dist
+        return torch.clamp(dist, min=1e-8)
 
     def init(self, x, y):
-        pw = self.compute_pixel_weights(y)
-        with torch.no_grad():
-          x = self.project(x)
+        # pw = self.compute_pixel_weights(y)
         batch_size, nchannels, h, w = x.size()
         y = F.interpolate(y, (h, w), mode="nearest")
         fg = x * y
         bg = x * (1 - y)        
         self.n_fg = torch.sum(y.view(batch_size, -1), dim=1)
         self.n_bg = torch.sum((1 - y).view(batch_size, -1), dim=1)
-        self.s_fg = fg.view(batch_size, nchannels, -1).sum(dim=2) / self.n_fg.unsqueeze(1)
-        self.s_bg = bg.view(batch_size, nchannels, -1).sum(dim=2) / self.n_bg.unsqueeze(1)
+        self.s_fg = fg.view(batch_size, nchannels, -1).sum(dim=2) / torch.clamp(self.n_fg.unsqueeze(1), min=1)
+        self.s_bg = bg.view(batch_size, nchannels, -1).sum(dim=2) / torch.clamp(self.n_bg.unsqueeze(1), min=1)
 
     def forward(self, x):
-        x = self.project(x)
         batch_size, nchannels, h, w = x.size()
         prior_fg = self.n_fg / (self.n_fg + self.n_bg)
         prior_bg = 1 - prior_fg
         ll_fg = self.distance(x, self.s_fg)
         ll_bg = self.distance(x, self.s_bg)
-        post_fg = prior_fg.view(batch_size, 1, 1) * ll_fg / (prior_fg.view(batch_size, 1, 1) * ll_fg + prior_bg.view(batch_size, 1, 1) * ll_bg)
-        post_bg = prior_bg.view(batch_size, 1, 1) * ll_bg / (prior_fg.view(batch_size, 1, 1) * ll_fg + prior_bg.view(batch_size, 1, 1) * ll_bg)
+        post_fg = 1 / (1 + prior_bg.view(batch_size, 1, 1) / prior_fg.view(batch_size, 1, 1) * ll_bg / ll_fg)
+        post_bg = 1 / (1 + prior_fg.view(batch_size, 1, 1) / prior_bg.view(batch_size, 1, 1) * ll_fg / ll_bg)
+        # post_fg = prior_fg.view(batch_size, 1, 1) * ll_fg / (prior_fg.view(batch_size, 1, 1) * ll_fg + prior_bg.view(batch_size, 1, 1) * ll_bg)
+        # post_bg = prior_bg.view(batch_size, 1, 1) * ll_bg / (prior_fg.view(batch_size, 1, 1) * ll_fg + prior_bg.view(batch_size, 1, 1) * ll_bg)
         nt_fg = post_fg.view(batch_size, -1).sum(dim=1)
         nt_bg = post_bg.view(batch_size, -1).sum(dim=1)
         self.n_fg = self.alpha * self.n_fg + nt_fg
         self.n_bg = self.alpha * self.n_bg + nt_bg
         fg = x * post_fg.unsqueeze(1)
         bg = x * post_bg.unsqueeze(1)
-        self.s_fg = self.beta * self.s_fg + fg.view(batch_size, nchannels, -1).sum(dim=2) / nt_fg.unsqueeze(1)
-        self.s_bg = self.beta * self.s_bg + bg.view(batch_size, nchannels, -1).sum(dim=2) / nt_bg.unsqueeze(1)
+        self.s_fg = self.beta * self.s_fg + fg.view(batch_size, nchannels, -1).sum(dim=2) / torch.clamp(nt_fg.unsqueeze(1), min=1)
+        self.s_bg = self.beta * self.s_bg + bg.view(batch_size, nchannels, -1).sum(dim=2) / torch.clamp(nt_bg.unsqueeze(1), min=1)
         return post_fg.unsqueeze(1)
