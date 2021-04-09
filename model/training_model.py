@@ -43,8 +43,8 @@ class TrainerModel(nn.Module):
 
         self.augmenter = augmenter
         self.augment = augmenter.augment_first_frame
-        # self.tmodels = [TargetObject(disc_params) for _ in range(batch_size)]
-        self.tmodels = BayesModel(device=device, layer="layer4")
+        self.tmodels = [TargetObject(disc_params) for _ in range(batch_size)]
+        # self.tmodels = BayesModel(device=device, layer="layer4")
         self.feature_extractor = feature_extractor
         self.refiner = seg_network
         self.tmodel_cache = tmodel_cache
@@ -121,37 +121,37 @@ class TrainerModel(nn.Module):
     def _initialize(self, first_image, first_labels, specs):
 
         cache_hits = 0
-        first_image = first_image.to(self.device)
-        first_labels = first_labels.to(self.device)
-        first_fea = self.feature_extractor(first_image)["layer4"]
-        self.tmodels.init(first_fea, first_labels)
+        # first_image = first_image.to(self.device)
+        # first_labels = first_labels.to(self.device)
+        # first_fea = self.feature_extractor(first_image)["layer4"]
+        # self.tmodels.init(first_fea, first_labels)
 
         # Augment first image and extract features
 
-        # L = self.tmodels[0].discriminator.layer
+        L = self.tmodels[0].discriminator.layer
 
-        # N = first_image.shape[0]  # Batch size
-        # for i in range(N):
+        N = first_image.shape[0]  # Batch size
+        for i in range(N):
 
-        #     state_dict = None
-        #     if self.tmodel_cache.enable:
-        #         state_dict = self.load_target_model(specs[i], L)
+            state_dict = None
+            if self.tmodel_cache.enable:
+                state_dict = self.load_target_model(specs[i], L)
 
-        #     have_pretrained = (state_dict is not None)
+            have_pretrained = (state_dict is not None)
 
-        #     if not have_pretrained:
-        #         im, lb = self.augment(first_image[i].to(self.device), first_labels[i].to(self.device))
-        #         ft = self.feature_extractor.no_grad_forward(im, output_layers=[L], chunk_size=4)
-        #         self.tmodels[i].initialize(ft, lb)
+            if not have_pretrained:
+                im, lb = self.augment(first_image[i].to(self.device), first_labels[i].to(self.device))
+                ft = self.feature_extractor.no_grad_forward(im, output_layers=[L], chunk_size=4)
+                self.tmodels[i].initialize(ft, lb)
 
-        #         if self.tmodel_cache.enable and not self.tmodel_cache.read_only:
-        #             self.save_target_model(specs[i], L, self.tmodels[i].get_state_dict())
+                if self.tmodel_cache.enable and not self.tmodel_cache.read_only:
+                    self.save_target_model(specs[i], L, self.tmodels[i].get_state_dict())
 
-        #     else:
-        #         if self.ft_channels is None:
-        #             self.ft_channels = self.feature_extractor.get_out_channels()[L]
-        #         self.tmodels[i].initialize_pretrained(state_dict)
-        #         cache_hits += 1
+            else:
+                if self.ft_channels is None:
+                    self.ft_channels = self.feature_extractor.get_out_channels()[L]
+                self.tmodels[i].initialize_pretrained(state_dict)
+                cache_hits += 1
 
         return cache_hits
 
@@ -162,18 +162,18 @@ class TrainerModel(nn.Module):
         batch_size = image.shape[0] # 16
         features = self.feature_extractor(image)
         scores = []
-        ft = features["layer4"] # (16, 1024, 30, 54)
+        # ft = features["layer4"] # (16, 1024, 30, 54)
 
-        # for i, tmdl in zip(range(batch_size), self.tmodels):
-        #     x = ft[i, None]
-        #     s = tmdl.classify(x)
-        #     scores.append(s)
-        # scores = torch.cat(scores, dim=0)  # (16, 1, 30, 54)
+        for i, tmdl in zip(range(batch_size), self.tmodels):
+            x = ft[i, None]
+            s = tmdl.classify(x)
+            scores.append(s)
+        scores = torch.cat(scores, dim=0)  # (16, 1, 30, 54)
 
         # import pdb
         # pdb.set_trace()
 
-        scores = self.tmodels(ft)
+        # scores = self.tmodels(ft)
 
         y = self.refiner(scores, features, image.shape)
         y = interpolate(y, image.shape[-2:])

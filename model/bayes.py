@@ -4,6 +4,7 @@ import torch.nn.functional as F
 
 from lib.utils import interpolate, conv
 
+
 class BayesModel(nn.Module):
 
     def __init__(self, in_channels=1024, c_channels=256, alpha=0.8, beta=0.8, pixel_weighting=None, device=None, layer=None):
