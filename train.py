@@ -56,7 +56,7 @@ class ModelParameters:
         )
 
         self.disc_params = edict(
-            layer="layer4", in_channels=256 if '18' in feature_extractor else 1024, c_channels=32, out_channels=1,
+            layer="disc4", in_channels=256 if '18' in feature_extractor else 1024, c_channels=32, out_channels=1,
             init_iters=(5, 10, 10, 10, 10), update_iters=(10,), update_filters=True,
             filter_reg=(1e-5, 1e-4), precond=(1e-5, 1e-4), precond_lr=0.1, CG_forgetting_rate=75,
             memory_size=20, train_skipping=8, learning_rate=0.1,
@@ -124,9 +124,9 @@ if __name__ == '__main__':
     if args.dset in ('all', 'yt2018'):
         dataset.append(('YouTubeVOSDataset', edict(dset_path=paths['ytvos2018'], epoch_samples=4000, min_seq_length=4, sample_size=3)))
 
-    params = ModelParameters(args.name, feature_extractor=args.ftext, device=args.dev, tmodel_cache_path=paths['tmcache'], batch_size=16)
+    params = ModelParameters(args.name, feature_extractor=args.ftext, device=args.dev, tmodel_cache_path=paths['tmcache'], batch_size=8)
     model = params.get_model()
-    optimizer = torch.optim.Adam(model.refiner.parameters(), lr=1e-3, betas=(0.9, 0.999), weight_decay=1e-5, amsgrad=True)
+    optimizer = torch.optim.Adam(model.refiner.parameters(), lr=5e-4, betas=(0.9, 0.999), weight_decay=1e-5, amsgrad=True)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=127, gamma=0.1)
     trainer = Trainer(args.name, model, optimizer=optimizer, scheduler=scheduler, dataset=dataset, checkpoints_path=paths['checkpoints'],
                       log_path=paths['tensorboard'], max_epochs=260, batch_size=params.batch_size, num_workers=8, load_latest=True, save_interval=1)
