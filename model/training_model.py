@@ -162,6 +162,8 @@ class TrainerModel(nn.Module):
         batch_size = image.shape[0] # 16
         features = self.feature_extractor(image)
         scores = []
+        ft = features[self.tmodels[0].discriminator.layer]
+
         # ft = features["layer4"] # (16, 1024, 30, 54)
 
         for i, tmdl in zip(range(batch_size), self.tmodels):

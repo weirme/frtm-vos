@@ -33,15 +33,18 @@ class ResnetFeatureExtractor:
         self.norm_weight = (1 / maxval / stds)
         self.norm_bias = (-means / stds)
 
-        self.lcm2 = LayerCascadeModule(256, None, 512)
-        self.lcm3 = LayerCascadeModule(512, 256, 1024)
-        self.lcm4 = LayerCascadeModule(1024, 512, 2048)
-        self.lcm5 = LayerCascadeModule(2048, 1024, None)
+        self.lcm2 = LayerCascadeModule(256, None, 512, 128)
+        self.lcm3 = LayerCascadeModule(512, 256, 1024, 128)
+        self.lcm4 = LayerCascadeModule(1024, 512, 2048, 128)
+        # self.lcm5 = LayerCascadeModule(2048, 1024, None)
 
     def to(self, device):
         self.resnet.to(device)
         self.norm_weight = self.norm_weight.to(device)
         self.norm_bias = self.norm_bias.to(device)
+        self.lcm2.to(device)
+        self.lcm3.to(device)
+        self.lcm4.to(device)
         return self
 
     def __call__(self, input, output_layers=None):
@@ -58,7 +61,7 @@ class ResnetFeatureExtractor:
         x = self.resnet.bn1(x)
         x = self.resnet.relu(x)
         x = self.resnet.maxpool(x)
-        # save_out('layer1', x)
+        save_out('layer1', x)
 
         x2 = self.resnet.layer1(x)
         # save_out('layer2', x)
@@ -73,13 +76,13 @@ class ResnetFeatureExtractor:
         # save_out('layer5', x)
 
         l2 = self.lcm2(x2, None, x3)
-        l3 = self.lcm3(x3, x2, x4)
-        l4 = self.lcm4(x4, x3, x5)
-        l5 = self.lcm5(x5, x4, None)
+        l3 = self.lcm3(x3, l2, x4)
+        l4 = self.lcm4(x4, l3, x5)
+        # l5 = self.lcm5(x5, x4, None)
         save_out('layer2', l2)
         save_out('layer3', l3)
         save_out('layer4', l4)
-        save_out('layer5', l5)
+        save_out('layer5', x5)
 
         return out
 
