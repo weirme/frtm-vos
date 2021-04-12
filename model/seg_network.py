@@ -146,6 +146,21 @@ class BackwardCompatibleUpsampler(nn.Module):
         return x
 
 
+class BaseUp(nn.Module):
+    
+    def __init__(self, f_channels, s_channels, out_channels, bias=False):
+        super().__init__()
+        self.conv1 = conv(s_channels+f_channels, out_channels, 3, bias)
+        self.conv2 = conv(out_channels, out_channels, 3, bias)
+
+    def forward(self, f, s):
+        h, w = f.shape[-2:]
+        s = interpolate(s, (h, w))
+        x = self.conv1(torch.cat((f, s), dim=1))
+        x = self.conv2(x)
+        return x
+
+
 class SegNetwork(nn.Module):
 
     def __init__(self, in_channels=1, out_channels=32, ft_channels=None, use_bn=False):
@@ -155,19 +170,25 @@ class SegNetwork(nn.Module):
         assert ft_channels is not None
         self.ft_channels = ft_channels
 
-        self.TSE = nn.ModuleDict()
-        self.RRB1 = nn.ModuleDict()
-        self.CAB = nn.ModuleDict()
-        self.RRB2 = nn.ModuleDict()
+        # self.TSE = nn.ModuleDict()
+        # self.RRB1 = nn.ModuleDict()
+        # self.CAB = nn.ModuleDict()
+        # self.RRB2 = nn.ModuleDict()
 
         ic = in_channels
         oc = out_channels
 
-        for L, fc in self.ft_channels.items():
-            self.TSE[L] = TSE(fc, ic, oc)
-            self.RRB1[L] = RRB(oc, use_bn=use_bn)
-            self.CAB[L] = CAB(oc, L == 'layer5')
-            self.RRB2[L] = RRB(oc, use_bn=use_bn)
+        self.up5 = BaseUp(2048, 1, oc)
+        self.up4 = BaseUp(1024, oc, oc)
+        self.up3 = BaseUp(512, oc, oc)
+        self.up2 = BaseUp(256, oc, oc)
+
+
+        # for L, fc in self.ft_channels.items():
+        #     self.TSE[L] = TSE(fc, ic, oc)
+        #     self.RRB1[L] = RRB(oc, use_bn=use_bn)
+        #     self.CAB[L] = CAB(oc, L == 'layer5')
+        #     self.RRB2[L] = RRB(oc, use_bn=use_bn)
 
         #if torch.__version__ == '1.0.1'
         self.project = BackwardCompatibleUpsampler(out_channels)
@@ -175,15 +196,20 @@ class SegNetwork(nn.Module):
 
     def forward(self, scores, features, image_size):
 
-        x = None
-        for i, L in enumerate(self.ft_channels):
-            ft = features[L]
-            s = interpolate(scores, ft.shape[-2:])  # Resample scores to match features size
+        # x = None
+        # for i, L in enumerate(self.ft_channels):
+        #     ft = features[L]
+        #     s = interpolate(scores, ft.shape[-2:])  # Resample scores to match features size
 
-            h, hpool = self.TSE[L](ft, s, x)
-            h = self.RRB1[L](h)
-            h = self.CAB[L](hpool, h)
-            x = self.RRB2[L](h)
+        #     h, hpool = self.TSE[L](ft, s, x)
+        #     h = self.RRB1[L](h)
+        #     h = self.CAB[L](hpool, h)
+        #     x = self.RRB2[L](h)
+
+        x = self.up5(features['layer5'], scores)
+        x = self.up4(features['layer4'], x)
+        x = self.up3(features['layer3'], x)
+        x = self.up2(features['layer2'], x)
 
         x = self.project(x, image_size)
         return x
