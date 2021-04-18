@@ -124,11 +124,11 @@ if __name__ == '__main__':
     if args.dset in ('all', 'yt2018'):
         dataset.append(('YouTubeVOSDataset', edict(dset_path=paths['ytvos2018'], epoch_samples=4000, min_seq_length=4, sample_size=3)))
 
-    params = ModelParameters(args.name, feature_extractor=args.ftext, device=args.dev, tmodel_cache_path=paths['tmcache'], batch_size=8)
+    params = ModelParameters(args.name, feature_extractor=args.ftext, device=args.dev, tmodel_cache_path=paths['tmcache'], batch_size=16)
     model = params.get_model()
     optimizer = torch.optim.Adam(model.refiner.parameters(), lr=5e-4, betas=(0.9, 0.999), weight_decay=1e-5, amsgrad=True)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=127, gamma=0.1)
     trainer = Trainer(args.name, model, optimizer=optimizer, scheduler=scheduler, dataset=dataset, checkpoints_path=paths['checkpoints'],
-                      log_path=paths['tensorboard'], max_epochs=260, batch_size=params.batch_size, num_workers=8, load_latest=True, save_interval=1)
+                      log_path=paths['tensorboard'], max_epochs=260, batch_size=params.batch_size, num_workers=4, load_latest=True, save_interval=1)
     trainer.train()
 
