@@ -21,10 +21,14 @@ class ResnetFeatureExtractor:
 
         self._out_channels = odict(  # Deep-to-shallow order is required by SegNetwork
             disc4=1024,
-            layer5=get_out_channels(self.resnet.layer4),
-            layer4=get_out_channels(self.resnet.layer3),
-            layer3=get_out_channels(self.resnet.layer2),
-            layer2=get_out_channels(self.resnet.layer1),
+            layer5=256,
+            layer4=256,
+            layer3=256,
+            layer2=256,
+            # layer5=get_out_channels(self.resnet.layer4),
+            # layer4=get_out_channels(self.resnet.layer3),
+            # layer3=get_out_channels(self.resnet.layer2),
+            # layer2=get_out_channels(self.resnet.layer1),
             layer1=get_out_channels(self.resnet.conv1))
 
         maxval = 255
@@ -37,7 +41,7 @@ class ResnetFeatureExtractor:
         self.lcm2 = LayerCascadeModule(256, None, 512, 256)
         self.lcm3 = LayerCascadeModule(512, 256, 1024, 256)
         self.lcm4 = LayerCascadeModule(1024, 512, 2048, 256)
-        # self.lcm5 = LayerCascadeModule(2048, 1024, None, 256)
+        self.lcm5 = LayerCascadeModule(2048, 1024, None, 256)
 
     def to(self, device):
         self.resnet.to(device)
@@ -46,7 +50,7 @@ class ResnetFeatureExtractor:
         self.lcm2.to(device)
         self.lcm3.to(device)
         self.lcm4.to(device)
-        # self.lcm5.to(device)
+        self.lcm5.to(device)
         return self
 
     def __call__(self, input, output_layers=None):
@@ -81,11 +85,11 @@ class ResnetFeatureExtractor:
         l2 = self.lcm2(x2, None, x3)
         l3 = self.lcm3(x3, x2, x4)
         l4 = self.lcm4(x4, x3, x5)
-        # l5 = self.lcm5(x5, x4, None)
+        l5 = self.lcm5(x5, x4, None)
         save_out('layer2', l2)
         save_out('layer3', l3)
         save_out('layer4', l4)
-        save_out('layer5', x5)
+        save_out('layer5', l5)
 
         return out
 

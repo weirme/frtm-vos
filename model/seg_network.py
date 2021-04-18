@@ -178,9 +178,9 @@ class SegNetwork(nn.Module):
         ic = in_channels
         oc = out_channels
 
-        self.up5 = BaseUp(2048, 1, oc)
-        self.up4 = BaseUp(1024, oc, oc)
-        self.up3 = BaseUp(512, oc, oc)
+        self.up5 = BaseUp(256, 1, oc)
+        self.up4 = BaseUp(256, oc, oc)
+        self.up3 = BaseUp(256, oc, oc)
         self.up2 = BaseUp(256, oc, oc)
 
 
