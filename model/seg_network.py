@@ -178,8 +178,8 @@ class SegNetwork(nn.Module):
         ic = in_channels
         oc = out_channels
 
-        self.up5 = BaseUp(256, 1, oc)
-        self.up4 = BaseUp(256, oc, oc)
+        # self.up5 = BaseUp(2048, 1, oc)
+        self.up4 = BaseUp(256, 1, oc)
         self.up3 = BaseUp(256, oc, oc)
         self.up2 = BaseUp(256, oc, oc)
 
@@ -206,8 +206,8 @@ class SegNetwork(nn.Module):
         #     h = self.CAB[L](hpool, h)
         #     x = self.RRB2[L](h)
 
-        x = self.up5(features['layer5'], scores)
-        x = self.up4(features['layer4'], x)
+        # x = self.up5(features['layer5'], scores)
+        x = self.up4(features['layer4'], scores)
         x = self.up3(features['layer3'], x)
         x = self.up2(features['layer2'], x)
 

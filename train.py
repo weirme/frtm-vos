@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
     args_parser = argparse.ArgumentParser(description='Train FRTM')
     args_parser.add_argument('name', type=str, help='Name of the training session, for logging and saving checkpoints.')
-    args_parser.add_argument('--ftext', type=str, default="resnet101", choices=["resnet101", "resnet18"], help='Feature extractor')
+    args_parser.add_argument('--ftext', type=str, default="resnet50", choices=["resnet101", "resnet18"], help='Feature extractor')
     args_parser.add_argument('--dset', type=str, default="all", choices=["all", "yt2018", "dv2017"],
                              help='Training datasets. all = use all data; Both DAVIS 2017 and YouTubeVOS 2018.')
     args_parser.add_argument('--dev', type=str, default="cuda:0", help='Target device to run on, default is cuda:0.')
@@ -129,6 +129,6 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.refiner.parameters(), lr=5e-4, betas=(0.9, 0.999), weight_decay=1e-5, amsgrad=True)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=127, gamma=0.1)
     trainer = Trainer(args.name, model, optimizer=optimizer, scheduler=scheduler, dataset=dataset, checkpoints_path=paths['checkpoints'],
-                      log_path=paths['tensorboard'], max_epochs=260, batch_size=params.batch_size, num_workers=4, load_latest=True, save_interval=1)
+                      log_path=paths['tensorboard'], max_epochs=260, batch_size=params.batch_size, num_workers=4, load_latest=False, save_interval=1)
     trainer.train()
 

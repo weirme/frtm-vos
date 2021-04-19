@@ -7,7 +7,7 @@ from lib.utils import interpolate, conv
 
 class LayerCascadeModule(nn.Module):
 
-    def __init__(self, cur_channels, prev_channels=None, next_channels=None, em_channels=256):
+    def __init__(self, cur_channels, prev_channels=None, next_channels=None, em_channels=64, out_channels=256):
         super().__init__()
 
         self.cur_conv1 = conv(cur_channels, em_channels, 1, bias=False)
@@ -15,7 +15,7 @@ class LayerCascadeModule(nn.Module):
         self.prev_conv = conv(prev_channels, em_channels, 1, bias=False) if prev_channels else None
         self.next_conv = conv(next_channels, em_channels, 1, bias=False) if next_channels else None
         valid = (prev_channels is not None) + (next_channels is not None)
-        self.out_conv = conv(cur_channels + valid * em_channels, em_channels, 1, bias=False)
+        self.out_conv = conv(cur_channels + valid * em_channels, out_channels, 1, bias=False)
 
     def forward(self, cur, pre, nxt):
         b, c, h, w = cur.size()
